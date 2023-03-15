@@ -22,7 +22,6 @@ export default function Home({ pokemons }: Props) {
 
   return (
     <Layout title="PoKeMoN">
-      <h1>Home</h1>
 
       <Grid.Container gap={2} justify="flex-start">
 
