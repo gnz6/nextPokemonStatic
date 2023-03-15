@@ -17,7 +17,7 @@ export const PokemonCard = ({ ...props }: SmallPokemons) => {
           <Card.Image
             src={props.img}
             alt={props.name}
-            width="100%"
+            width={100}
             height={140}
           />
           <Card.Footer>

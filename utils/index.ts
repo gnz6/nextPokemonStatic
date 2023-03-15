@@ -1,0 +1,1 @@
+export { default as localFavs} from "./localFavs"
