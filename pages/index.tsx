@@ -26,7 +26,7 @@ export default function Home({ pokemons }: Props) {
       <Grid.Container gap={2} justify="flex-start">
 
         {mapPokemons.map(({id, name, url, img}) => (
-          <PokemonCard id={id} name={name} url={url} img={img}/>
+          <PokemonCard key={id} id={id} name={name} url={url} img={img}/>
           ))}
           
           </Grid.Container>

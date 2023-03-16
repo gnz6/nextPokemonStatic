@@ -1,47 +1,48 @@
-import { Layout } from "../../components/layouts/Layout";
-import { GetStaticPaths, GetStaticProps } from "next";
-import { Pokemon } from "@/interfaces";
-import { pokeApi } from "@/api";
+import { GetStaticPaths, GetStaticProps } from 'next';
+import { Layout } from '../../components/layouts/Layout';
+import { pokeApi } from '@/api';
+import { Pokemon } from '@/interfaces';
 import {
-  Grid,
-  Card,
-  Text,
-  Button,
-  Container,
-  Image,
-} from "@nextui-org/react";
-import {  useState } from "react";
-import { localFavs } from "@/utils";
+    Grid,
+    Card,
+    Text,
+    Button,
+    Container,
+    Image,
+  } from "@nextui-org/react";import { useState } from 'react';
+import { localFavs } from '@/utils';
 import confetti from "canvas-confetti";
 
+
 interface Props {
-  pokemon: Pokemon;
-}
+    pokemon: Pokemon;
+  }
 
-const PokemonPage = ({ pokemon }: Props) => {
+const PokemonByName = ({ pokemon }: Props) => {
 
-  const [isInFavs, setisInFavs] = useState(localFavs.isFav(pokemon.id));
+    const [isInFavs, setisInFavs] = useState(localFavs.isFav(pokemon.id));
 
-  const onToggle = () => {
-    localFavs.toggleFav(pokemon.id);
-    setisInFavs(!isInFavs)
+    const onToggle = () => {
+      localFavs.toggleFav(pokemon.id);
+      setisInFavs(!isInFavs)
+  
+      if( isInFavs )return
+      confetti({
+        zIndex:999,
+        particleCount: 100,
+        spread: 160,
+        angle:-100,
+        origin: {
+          x:1,
+          y:0
+        }
+      })
+    };
 
-    if( isInFavs )return
-    confetti({
-      zIndex:999,
-      particleCount: 100,
-      spread: 160,
-      angle:-100,
-      origin: {
-        x:1,
-        y:0
-      }
-    })
-  };
 
   return (
-    <Layout title={pokemon.name}>
-      <Grid.Container css={{ marginTop: "5px" }} gap={2}>
+    <Layout>
+ <Grid.Container css={{ marginTop: "5px" }} gap={2}>
         <Grid xs={12} sm={4}>
           <Card isHoverable css={{ padding: "30px" }}>
             <Card.Body>
@@ -121,30 +122,40 @@ const PokemonPage = ({ pokemon }: Props) => {
         </Grid>
       </Grid.Container>
     </Layout>
-  );
-};
+  )
+}
 
-export default PokemonPage;
+export default PokemonByName 
+
+
 
 export const getStaticPaths: GetStaticPaths = async (ctx) => {
-  const allPokemons = [...Array(251)].map((value, index) => `${index + 1}`);
 
-  return {
-    paths: allPokemons.map((id) => ({
-      params: { id },
-    })),
-    fallback: false,
+
+    const fetchPokemons = await pokeApi.get("/pokemon?limit=251")
+    const allPokemons = fetchPokemons.data.results
+    console.log(allPokemons);
+    
+    // const allPokemons = [...Array(251)].map((value, index) => `${index + 1}`);
+  
+    return {
+      paths: allPokemons.map(({name} : Pokemon) => ({
+        params: { name },
+      })),
+      fallback: false,
+    };
   };
-};
-
-export const getStaticProps: GetStaticProps = async ({ params }) => {
-  const { id } = params as { id: string };
-
-  const { data } = await pokeApi.get<Pokemon>(`/pokemon/${id}`);
-
-  return {
-    props: {
-      pokemon: data,
-    },
+  
+  export const getStaticProps: GetStaticProps = async ({ params }) => {
+    const { name } = params as { name: string };
+    // console.log(params)
+  
+    const { data } = await pokeApi.get<Pokemon>(`/pokemon/${name}`);
+  
+    return {
+      props: {
+        pokemon: data,
+      },
+    };
   };
-};
+  
