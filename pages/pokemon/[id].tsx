@@ -13,6 +13,7 @@ import {
 import {  useState } from "react";
 import { localFavs } from "@/utils";
 import confetti from "canvas-confetti";
+import { getPokemonInfo } from '../../utils/getPokemonInfo';
 
 interface Props {
   pokemon: Pokemon;
@@ -21,6 +22,9 @@ interface Props {
 const PokemonPage = ({ pokemon }: Props) => {
 
   const [isInFavs, setisInFavs] = useState(localFavs.isFav(pokemon.id));
+
+  const [dispaySprite, setDisplaySprite] = useState("dreamWorld")
+
 
   const onToggle = () => {
     localFavs.toggleFav(pokemon.id);
@@ -47,8 +51,16 @@ const PokemonPage = ({ pokemon }: Props) => {
             <Card.Body>
               <Card.Image
                 src={
-                  pokemon.sprites.other?.dream_world.front_default ||
-                  "/no-image.png"
+                  dispaySprite === "front_default"
+                  ? pokemon.sprites.front_default
+                  : dispaySprite === "back_default"
+                  ? pokemon.sprites.back_default
+                  : dispaySprite === "front_shiny"
+                  ? pokemon.sprites.front_shiny
+                  : dispaySprite === "back_shiny"
+                  ? pokemon.sprites.back_shiny
+                  : pokemon.sprites.other?.dream_world.front_default || "noImg"
+
                 }
                 alt={pokemon.name}
                 height={200}
@@ -71,36 +83,47 @@ const PokemonPage = ({ pokemon }: Props) => {
               color={"warning"} 
               ghost={!isInFavs} 
               onClick={onToggle}>
-                {isInFavs? <Text color="black"> Fav Pokemon </Text> : <Text color="white"> Add Fav</Text>}
+                {isInFavs? <Text color="black" h3> Fav Pokemon </Text> : <Text color="white" h3> Add Fav</Text>}
               </Button>
             </Card.Header>
 
             <Card.Body>
               <Text size={30}>Sprites: </Text>
               <Container display="flex" direction="row">
+              <Image
+                  src={pokemon.sprites.other?.dream_world.front_default || "noImg"}
+                  alt={pokemon.name}
+                  width={40}
+                  height={40}
+                  onClick={()=> setDisplaySprite("dreamWorld")}
+                />
                 <Image
                   src={pokemon.sprites.front_default}
                   alt={pokemon.name}
                   width={100}
                   height={100}
+                  onClick={()=> setDisplaySprite("front_default")}
                 />
                 <Image
                   src={pokemon.sprites.back_default}
                   alt={pokemon.name}
                   width={100}
                   height={100}
+                  onClick={()=> setDisplaySprite("back_default")}
                 />
                 <Image
                   src={pokemon.sprites.front_shiny}
                   alt={pokemon.name}
                   width={100}
                   height={100}
+                  onClick={()=> setDisplaySprite("front_shiny")}
                 />
                 <Image
                   src={pokemon.sprites.back_shiny}
                   alt={pokemon.name}
                   width={100}
                   height={100}
+                  onClick={()=> setDisplaySprite("back_shiny")}
                 />
               </Container>
 
@@ -110,7 +133,7 @@ const PokemonPage = ({ pokemon }: Props) => {
               </Text>
               <Container display="flex" direction="column">
                 {pokemon.types.map((type) => (
-                  <Text size={30} transform="capitalize">
+                  <Text size={30} transform="capitalize" key={type.type.name}>
                     {" "}
                     {type.type.name}{" "}
                   </Text>
@@ -140,11 +163,9 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   const { id } = params as { id: string };
 
-  const { data } = await pokeApi.get<Pokemon>(`/pokemon/${id}`);
-
   return {
     props: {
-      pokemon: data,
+      pokemon : await getPokemonInfo(id),
     },
   };
 };

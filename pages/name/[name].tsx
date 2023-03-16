@@ -9,9 +9,11 @@ import {
     Button,
     Container,
     Image,
-  } from "@nextui-org/react";import { useState } from 'react';
+  } from "@nextui-org/react";import { useState, useEffect } from 'react';
 import { localFavs } from '@/utils';
 import confetti from "canvas-confetti";
+import { PokeRequest } from '../../interfaces/pokeList';
+import { getPokemonInfo } from '../../utils/getPokemonInfo';
 
 
 interface Props {
@@ -21,6 +23,7 @@ interface Props {
 const PokemonByName = ({ pokemon }: Props) => {
 
     const [isInFavs, setisInFavs] = useState(localFavs.isFav(pokemon.id));
+    const [dispaySprite, setDisplaySprite] = useState("dreamWorld")
 
     const onToggle = () => {
       localFavs.toggleFav(pokemon.id);
@@ -40,6 +43,7 @@ const PokemonByName = ({ pokemon }: Props) => {
     };
 
 
+
   return (
     <Layout>
  <Grid.Container css={{ marginTop: "5px" }} gap={2}>
@@ -48,9 +52,17 @@ const PokemonByName = ({ pokemon }: Props) => {
             <Card.Body>
               <Card.Image
                 src={
-                  pokemon.sprites.other?.dream_world.front_default ||
-                  "/no-image.png"
-                }
+                    dispaySprite === "front_default"
+                    ? pokemon.sprites.front_default
+                    : dispaySprite === "back_default"
+                    ? pokemon.sprites.back_default
+                    : dispaySprite === "front_shiny"
+                    ? pokemon.sprites.front_shiny
+                    : dispaySprite === "back_shiny"
+                    ? pokemon.sprites.back_shiny
+                    : pokemon.sprites.other?.dream_world.front_default || "noImg"
+  
+                  }
                 alt={pokemon.name}
                 height={200}
                 width={"100%"}
@@ -72,36 +84,47 @@ const PokemonByName = ({ pokemon }: Props) => {
               color={"warning"} 
               ghost={!isInFavs} 
               onClick={onToggle}>
-                {isInFavs? <Text color="black"> Fav Pokemon </Text> : <Text color="white"> Add Fav</Text>}
+                {isInFavs? <Text color="black" h3> Fav Pokemon </Text> : <Text color="white" h3> Add Fav</Text>}
               </Button>
             </Card.Header>
 
             <Card.Body>
               <Text size={30}>Sprites: </Text>
               <Container display="flex" direction="row">
+              <Image
+                  src={pokemon.sprites.other?.dream_world.front_default || "noImg"}
+                  alt={pokemon.name}
+                  width={40}
+                  height={40}
+                  onClick={()=> setDisplaySprite("dreamWorld")}
+                />
                 <Image
                   src={pokemon.sprites.front_default}
                   alt={pokemon.name}
                   width={100}
                   height={100}
+                  onClick={()=> setDisplaySprite("front_default")}
                 />
                 <Image
                   src={pokemon.sprites.back_default}
                   alt={pokemon.name}
                   width={100}
                   height={100}
+                  onClick={()=> setDisplaySprite("back_default")}
                 />
                 <Image
                   src={pokemon.sprites.front_shiny}
                   alt={pokemon.name}
                   width={100}
                   height={100}
+                  onClick={()=> setDisplaySprite("front_shiny")}
                 />
                 <Image
                   src={pokemon.sprites.back_shiny}
                   alt={pokemon.name}
                   width={100}
                   height={100}
+                  onClick={()=> setDisplaySprite("back_shiny")}
                 />
               </Container>
 
@@ -111,7 +134,7 @@ const PokemonByName = ({ pokemon }: Props) => {
               </Text>
               <Container display="flex" direction="column">
                 {pokemon.types.map((type) => (
-                  <Text size={30} transform="capitalize">
+                  <Text size={30} transform="capitalize" key={type.type.name}>
                     {" "}
                     {type.type.name}{" "}
                   </Text>
@@ -132,14 +155,11 @@ export default PokemonByName
 export const getStaticPaths: GetStaticPaths = async (ctx) => {
 
 
-    const fetchPokemons = await pokeApi.get("/pokemon?limit=251")
-    const allPokemons = fetchPokemons.data.results
-    console.log(allPokemons);
-    
-    // const allPokemons = [...Array(251)].map((value, index) => `${index + 1}`);
-  
+    const {data} = await pokeApi.get<PokeRequest>("/pokemon?limit=251")
+    const allPokemonsName : string[] = data.results.map( pokemon => pokemon.name)
+      
     return {
-      paths: allPokemons.map(({name} : Pokemon) => ({
+      paths: allPokemonsName.map( name => ({
         params: { name },
       })),
       fallback: false,
@@ -148,13 +168,10 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
   
   export const getStaticProps: GetStaticProps = async ({ params }) => {
     const { name } = params as { name: string };
-    // console.log(params)
-  
-    const { data } = await pokeApi.get<Pokemon>(`/pokemon/${name}`);
   
     return {
       props: {
-        pokemon: data,
+        pokemon : await getPokemonInfo(name),
       },
     };
   };
